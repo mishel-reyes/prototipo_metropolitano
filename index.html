@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Metropolitano — Prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#E30613;
+    --red-dark:#A50015;
+    --red-soft:#FDE6E8;
+    --ink:#15181C;
+    --paper:#F1F2F4;
+    --card:#FFFFFF;
+    --gray:#6B7280;
+    --gray-light:#E4E6EA;
+    --amber:#F59E0B;
+    --amber-soft:#FEF3DC;
+    --green:#16A34A;
+    --green-soft:#E4F6EA;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+    --radius:18px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:var(--font-body);
+    background:
+      radial-gradient(circle at 20% 10%, #ffffff 0%, var(--paper) 55%);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 12px;
+    color:var(--ink);
+  }
+  .phone{
+    width:390px;
+    max-width:100%;
+    height:820px;
+    background:var(--paper);
+    border-radius:44px;
+    border:10px solid var(--ink);
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.35);
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .notch{
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    width:130px; height:22px; background:var(--ink); border-radius:14px; z-index:20;
+  }
+  .statusbar{
+    height:38px; flex:0 0 auto; display:flex; align-items:flex-end;
+    justify-content:space-between; padding:0 26px 6px 26px;
+    font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--ink);
+  }
+  .screen{
+    flex:1; overflow-y:auto; position:relative;
+    scrollbar-width:none;
+  }
+  .screen::-webkit-scrollbar{display:none;}
+  .view{display:none; padding:6px 20px 100px 20px; animation:fade .25s ease;}
+  .view.active{display:block;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  /* Header */
+  .app-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 2px 18px 2px;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:9px; background:var(--red);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-family:var(--font-display); font-weight:700; font-size:15px;
+    box-shadow:0 6px 14px -4px rgba(227,6,19,.55);
+  }
+  .brand-text{font-family:var(--font-display); font-weight:700; font-size:16px; letter-spacing:.2px;}
+  .brand-sub{font-size:10px; color:var(--gray); font-family:var(--font-mono); letter-spacing:.5px; text-transform:uppercase;}
+  .avatar{
+    width:34px; height:34px; border-radius:50%; background:var(--ink); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600;
+    font-family:var(--font-display);
+  }
+
+  h1.page-title{font-family:var(--font-display); font-size:21px; font-weight:700; margin-bottom:4px;}
+  p.page-sub{color:var(--gray); font-size:13px; margin-bottom:18px;}
+
+  /* Cards */
+  .card{
+    background:var(--card); border-radius:var(--radius); padding:16px;
+    box-shadow:0 1px 2px rgba(20,20,20,.04), 0 8px 20px -14px rgba(20,20,20,.15);
+    margin-bottom:14px; border:1px solid rgba(0,0,0,0.035);
+  }
+
+  /* Home: balance card */
+  .balance-card{
+    background:linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
+    border-radius:20px; padding:20px; color:#fff; margin-bottom:16px;
+    position:relative; overflow:hidden;
+  }
+  .balance-card::after{
+    content:""; position:absolute; right:-30px; top:-30px; width:140px; height:140px;
+    border-radius:50%; background:rgba(255,255,255,0.08);
+  }
+  .balance-label{font-size:11px; opacity:.85; text-transform:uppercase; letter-spacing:.6px; font-family:var(--font-mono);}
+  .balance-amount{font-family:var(--font-display); font-size:32px; font-weight:700; margin:4px 0 14px 0;}
+  .balance-row{display:flex; justify-content:space-between; align-items:center; font-size:12px;}
+  .chip{
+    background:rgba(255,255,255,0.18); padding:5px 10px; border-radius:20px;
+    font-size:11px; font-family:var(--font-mono);
+  }
+
+  .quick-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
+  .quick-btn{
+    background:var(--card); border-radius:16px; padding:14px 12px; text-align:left;
+    border:1px solid rgba(0,0,0,0.05); cursor:pointer;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .quick-icon{
+    width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+  }
+  .quick-title{font-size:12.5px; font-weight:600;}
+  .quick-desc{font-size:10.5px; color:var(--gray);}
+
+  .section-label{
+    font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.7px;
+    color:var(--gray); margin:18px 0 10px 2px; display:flex; align-items:center; gap:8px;
+  }
+  .section-label::before{content:""; width:14px; height:2px; background:var(--red); display:inline-block;}
+
+  .trip-card{display:flex; align-items:center; gap:12px;}
+  .trip-line-dot{
+    width:10px; height:10px; border-radius:50%; background:var(--red); flex:0 0 auto;
+    box-shadow:0 0 0 4px var(--red-soft);
+  }
+  .trip-info{flex:1;}
+  .trip-route{font-weight:600; font-size:13.5px;}
+  .trip-meta{font-size:11px; color:var(--gray); margin-top:2px;}
+  .trip-time{font-family:var(--font-mono); font-weight:600; font-size:13px; color:var(--red);}
+
+  /* Corridor spine — signature element */
+  .spine-wrap{position:relative; padding:6px 0 6px 26px;}
+  .spine-line{
+    position:absolute; left:9px; top:8px; bottom:8px; width:3px;
+    background:linear-gradient(var(--red), var(--red-dark));
+    border-radius:3px;
+  }
+  .spine-station{position:relative; padding:12px 0 12px 18px; display:flex; align-items:center; justify-content:space-between;}
+  .spine-station::before{
+    content:""; position:absolute; left:-26px+0px; left:0px; top:50%; transform:translateY(-50%);
+    width:12px; height:12px; border-radius:50%; background:#fff; border:3px solid var(--red);
+  }
+  .spine-station.active::before{ background:var(--red); box-shadow:0 0 0 5px var(--red-soft);}
+  .st-name{font-size:13px; font-weight:600;}
+  .st-eta{font-family:var(--font-mono); font-size:11.5px; color:var(--green); font-weight:600;}
+  .st-eta.mid{color:var(--amber);}
+  .st-crowd{font-size:9.5px; color:var(--gray); margin-top:2px;}
+
+  .bus-live-card{display:flex; align-items:center; gap:12px;}
+  .bus-icon{
+    width:40px; height:40px; border-radius:12px; background:var(--red-soft); color:var(--red);
+    display:flex; align-items:center; justify-content:center; font-size:18px; flex:0 0 auto;
+  }
+  .pulse{
+    width:8px; height:8px; border-radius:50%; background:var(--green); display:inline-block;
+    box-shadow:0 0 0 0 rgba(22,163,74,0.5); animation:pulse 1.6s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(22,163,74,.5);}
+    70%{box-shadow:0 0 0 8px rgba(22,163,74,0);}
+    100%{box-shadow:0 0 0 0 rgba(22,163,74,0);}
+  }
+
+  /* Tickets */
+  .ticket-type{display:flex; gap:10px; margin-bottom:16px;}
+  .ticket-opt{
+    flex:1; border:1.5px solid var(--gray-light); border-radius:14px; padding:12px; text-align:center; cursor:pointer;
+  }
+  .ticket-opt.selected{border-color:var(--red); background:var(--red-soft);}
+  .ticket-opt .t-name{font-weight:700; font-size:13px;}
+  .ticket-opt .t-price{font-family:var(--font-mono); font-size:16px; margin-top:4px; color:var(--red); font-weight:700;}
+
+  .qr-card{
+    background:var(--ink); border-radius:20px; padding:24px; text-align:center; color:#fff;
+  }
+  .qr-box{
+    width:160px; height:160px; background:#fff; margin:14px auto; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .qr-pattern{width:130px; height:130px;
+    background-image:
+      repeating-linear-gradient(0deg, #111 0 6px, transparent 6px 12px),
+      repeating-linear-gradient(90deg, #111 0 6px, transparent 6px 12px);
+    background-blend-mode:multiply; opacity:0.85;
+  }
+  .qr-caption{font-family:var(--font-mono); font-size:11px; opacity:.75; margin-top:6px;}
+
+  .btn-primary{
+    width:100%; background:var(--red); color:#fff; border:none; padding:14px; border-radius:14px;
+    font-family:var(--font-body); font-weight:700; font-size:14px; cursor:pointer; margin-top:6px;
+    box-shadow:0 10px 20px -8px rgba(227,6,19,.5);
+  }
+  .btn-secondary{
+    width:100%; background:var(--card); color:var(--ink); border:1.5px solid var(--gray-light); padding:13px; border-radius:14px;
+    font-weight:600; font-size:13.5px; cursor:pointer; margin-top:8px;
+  }
+
+  /* Reservation */
+  .select-row{display:flex; gap:10px; margin-bottom:12px;}
+  .select-box{
+    flex:1; border:1.5px solid var(--gray-light); border-radius:12px; padding:10px 12px;
+    font-size:12.5px; font-weight:500; display:flex; flex-direction:column; gap:2px;
+  }
+  .select-box span.lbl{font-size:9.5px; color:var(--gray); text-transform:uppercase; font-family:var(--font-mono); letter-spacing:.5px;}
+  .slot-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0;}
+  .slot{
+    text-align:center; padding:10px 4px; border-radius:12px; border:1.5px solid var(--gray-light);
+    font-family:var(--font-mono); font-size:12px; cursor:pointer;
+  }
+  .slot.selected{border-color:var(--red); background:var(--red-soft); color:var(--red-dark); font-weight:700;}
+  .slot .cap{display:block; font-size:9px; color:var(--gray); margin-top:3px; font-family:var(--font-body);}
+  .slot.selected .cap{color:var(--red-dark);}
+
+  /* AI Assistant */
+  .chat-wrap{display:flex; flex-direction:column; gap:10px; padding-bottom:10px;}
+  .msg{max-width:82%; padding:10px 13px; border-radius:16px; font-size:12.5px; line-height:1.4;}
+  .msg.bot{background:var(--card); border:1px solid var(--gray-light); align-self:flex-start; border-bottom-left-radius:4px;}
+  .msg.user{background:var(--red); color:#fff; align-self:flex-end; border-bottom-right-radius:4px;}
+  .suggest-row{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0;}
+  .suggest-chip{
+    border:1.5px solid var(--red-soft); background:var(--red-soft); color:var(--red-dark);
+    padding:7px 12px; border-radius:20px; font-size:11px; font-weight:600; cursor:pointer;
+  }
+  .chat-input{
+    display:flex; gap:8px; align-items:center; background:var(--card); border:1.5px solid var(--gray-light);
+    border-radius:20px; padding:6px 6px 6px 14px; margin-top:4px;
+  }
+  .chat-input input{border:none; outline:none; flex:1; font-size:12.5px; font-family:var(--font-body); background:transparent;}
+  .send-btn{
+    width:32px; height:32px; border-radius:50%; background:var(--red); color:#fff; border:none;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto;
+  }
+
+  /* Alerts */
+  .alert-card{display:flex; gap:12px; align-items:flex-start;}
+  .alert-tag{
+    font-family:var(--font-mono); font-size:9.5px; font-weight:700; padding:3px 8px; border-radius:6px;
+    text-transform:uppercase; letter-spacing:.4px; flex:0 0 auto;
+  }
+  .alert-tag.high{background:var(--red-soft); color:var(--red-dark);}
+  .alert-tag.mid{background:var(--amber-soft); color:#92610A;}
+  .alert-tag.low{background:var(--green-soft); color:#146334;}
+  .alert-title{font-weight:700; font-size:13px; margin-bottom:2px;}
+  .alert-desc{font-size:11.5px; color:var(--gray); line-height:1.4;}
+  .alert-meta{font-family:var(--font-mono); font-size:10px; color:#9AA0A8; margin-top:6px;}
+
+  /* Bottom nav */
+  .tabbar{
+    position:absolute; bottom:0; left:0; right:0; height:74px;
+    background:rgba(255,255,255,0.92); backdrop-filter:blur(10px);
+    border-top:1px solid rgba(0,0,0,0.06);
+    display:flex; align-items:center; justify-content:space-around;
+    padding-bottom:10px; z-index:15;
+  }
+  .tab{
+    display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;
+    color:var(--gray); font-size:9.5px; font-weight:600; width:64px;
+  }
+  .tab.active{color:var(--red);}
+  .tab-ico{font-size:19px;}
+  .badge-dot{
+    position:absolute; top:-2px; right:8px; width:8px; height:8px; background:var(--red);
+    border-radius:50%; border:2px solid #fff;
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="statusbar">
+    <span>9:41</span>
+    <span>MI METROPOLITANO</span>
+    <span>100%</span>
+  </div>
+
+  <div class="screen">
+
+    <!-- INICIO -->
+    <div class="view active" id="view-inicio">
+      <div class="app-header">
+        <div class="brand">
+          <div class="brand-mark">M</div>
+          <div>
+            <div class="brand-text">Mi Metropolitano</div>
+            <div class="brand-sub">Corredor Rojo</div>
+          </div>
+        </div>
+        <div class="avatar">DR</div>
+      </div>
+
+      <h1 class="page-title">Hola, Daniela 👋</h1>
+      <p class="page-sub">Viernes 17 de julio · Servicio operando con normalidad</p>
+
+      <div class="balance-card">
+        <div class="balance-label">Saldo tarjeta</div>
+        <div class="balance-amount">S/ 12.50</div>
+        <div class="balance-row">
+          <span class="chip">Tarjeta •• 4821</span>
+          <span class="chip">↺ Recargar</span>
+        </div>
+      </div>
+
+      <div class="quick-grid">
+        <div class="quick-btn" onclick="showView('pasajes')">
+          <div class="quick-icon" style="background:var(--red-soft); color:var(--red);">🎫</div>
+          <div class="quick-title">Comprar pasaje</div>
+          <div class="quick-desc">Pasaje único o recarga</div>
+        </div>
+        <div class="quick-btn" onclick="showView('reservas')">
+          <div class="quick-icon" style="background:var(--amber-soft); color:#92610A;">📅</div>
+          <div class="quick-title">Reservar viaje</div>
+          <div class="quick-desc">Asegura tu cupo en hora punta</div>
+        </div>
+        <div class="quick-btn" onclick="showView('mapa')">
+          <div class="quick-icon" style="background:var(--green-soft); color:#146334;">📍</div>
+          <div class="quick-title">Mapa en vivo</div>
+          <div class="quick-desc">Buses y ETA por estación</div>
+        </div>
+        <div class="quick-btn" onclick="showView('asistente')">
+          <div class="quick-icon" style="background:#E9E7FE; color:#5B4FE0;">✦</div>
+          <div class="quick-title">Asistente IA</div>
+          <div class="quick-desc">Resuelve dudas al instante</div>
+        </div>
+      </div>
+
+      <div class="section-label">Tu próximo viaje</div>
+      <div class="card trip-card">
+        <div class="trip-line-dot"></div>
+        <div class="trip-info">
+          <div class="trip-route">Naranjal → Matellini</div>
+          <div class="trip-meta">Reservado · Estación Javier Prado</div>
+        </div>
+        <div class="trip-time">7:45 AM</div>
+      </div>
+
+      <div class="section-label">Alertas activas</div>
+      <div class="card alert-card" onclick="showView('alertas')" style="cursor:pointer;">
+        <span class="alert-tag mid">Demora</span>
+        <div>
+          <div class="alert-title">Tráfico en Estación Angamos</div>
+          <div class="alert-desc">Buses con 6-8 min de retraso en sentido sur.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAPA EN VIVO -->
+    <div class="view" id="view-mapa">
+      <div class="app-header">
+        <h1 class="page-title" style="margin:0;">Mapa en tiempo real</h1>
+        <div class="avatar">DR</div>
+      </div>
+      <p class="page-sub">Sentido: Naranjal → Matellini</p>
+
+      <div class="card bus-live-card">
+        <div class="bus-icon">🚌</div>
+        <div style="flex:1;">
+          <div style="font-weight:700; font-size:13px;">Bus A-214 <span class="pulse" style="margin-left:6px;"></span></div>
+          <div style="font-size:11px; color:var(--gray);">Aforo: 62% · Velocidad 28 km/h</div>
+        </div>
+        <div class="trip-time">3 min</div>
+      </div>
+
+      <div class="section-label">Próximas estaciones</div>
+      <div class="card" style="padding:6px 8px;">
+        <div class="spine-wrap">
+          <div class="spine-line"></div>
+          <div class="spine-station active">
+            <div>
+              <div class="st-name">Javier Prado</div>
+              <div class="st-crowd">Aforo bajo</div>
+            </div>
+            <div class="st-eta">Llegando</div>
+          </div>
+          <div class="spine-station">
+            <div>
+              <div class="st-name">Aramburú</div>
+              <div class="st-crowd">Aforo medio</div>
+            </div>
+            <div class="st-eta">3 min</div>
+          </div>
+          <div class="spine-station">
+            <div>
+              <div class="st-name">Angamos</div>
+              <div class="st-crowd">Aforo alto · congestión</div>
+            </div>
+            <div class="st-eta mid">8 min</div>
+          </div>
+          <div class="spine-station">
+            <div>
+              <div class="st-name">Ricardo Palma</div>
+              <div class="st-crowd">Aforo medio</div>
+            </div>
+            <div class="st-eta">12 min</div>
+          </div>
+          <div class="spine-station">
+            <div>
+              <div class="st-name">Plaza de Flores</div>
+              <div class="st-crowd">Aforo bajo</div>
+            </div>
+            <div class="st-eta">16 min</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASAJES -->
+    <div class="view" id="view-pasajes">
+      <div class="app-header">
+        <h1 class="page-title" style="margin:0;">Comprar pasaje</h1>
+        <div class="avatar">DR</div>
+      </div>
+      <p class="page-sub">Elige el tipo de pasaje</p>
+
+      <div class="ticket-type">
+        <div class="ticket-opt selected">
+          <div class="t-name">Pasaje único</div>
+          <div class="t-price">S/ 2.50</div>
+        </div>
+        <div class="ticket-opt">
+          <div class="t-name">Recarga tarjeta</div>
+          <div class="t-price">S/ 10.00</div>
+        </div>
+      </div>
+
+      <div class="qr-card">
+        <div style="font-family:var(--font-mono); font-size:11px; opacity:.7;">CÓDIGO DE EMBARQUE</div>
+        <div class="qr-box"><div class="qr-pattern"></div></div>
+        <div class="qr-caption">Válido por 15 min · Estación Javier Prado</div>
+      </div>
+
+      <button class="btn-primary">Pagar S/ 2.50</button>
+      <button class="btn-secondary">Ver historial de pasajes</button>
+    </div>
+
+    <!-- RESERVAS -->
+    <div class="view" id="view-reservas">
+      <div class="app-header">
+        <h1 class="page-title" style="margin:0;">Reservar viaje</h1>
+        <div class="avatar">DR</div>
+      </div>
+      <p class="page-sub">Asegura tu cupo en horas de alta demanda</p>
+
+      <div class="select-row">
+        <div class="select-box"><span class="lbl">Origen</span>Naranjal</div>
+        <div class="select-box"><span class="lbl">Destino</span>Matellini</div>
+      </div>
+
+      <div class="section-label">Elige tu horario</div>
+      <div class="slot-grid">
+        <div class="slot">7:00<span class="cap">Cupos: 12</span></div>
+        <div class="slot selected">7:45<span class="cap">Cupos: 5</span></div>
+        <div class="slot">8:15<span class="cap">Cupos: 18</span></div>
+        <div class="slot">8:45<span class="cap">Cupos: 20</span></div>
+        <div class="slot">9:15<span class="cap">Cupos: 24</span></div>
+        <div class="slot">9:45<span class="cap">Cupos: 30</span></div>
+      </div>
+
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:700; font-size:13px;">Franja 7:45 AM</div>
+          <div style="font-size:11px; color:var(--gray);">Estación Javier Prado · Aforo garantizado</div>
+        </div>
+        <div class="trip-time">S/ 2.50</div>
+      </div>
+
+      <button class="btn-primary">Confirmar reserva</button>
+    </div>
+
+    <!-- ASISTENTE IA -->
+    <div class="view" id="view-asistente">
+      <div class="app-header">
+        <h1 class="page-title" style="margin:0;">Asistente IA</h1>
+        <div class="avatar">DR</div>
+      </div>
+      <p class="page-sub">Pregúntame sobre rutas, horarios o incidencias</p>
+
+      <div class="chat-wrap">
+        <div class="msg bot">Hola Daniela, soy tu asistente del Metropolitano. ¿En qué te ayudo hoy?</div>
+        <div class="msg user">¿A qué hora llega el próximo bus a Naranjal?</div>
+        <div class="msg bot">El bus A-214 llega en 3 min. Aforo bajo. ¿Quieres que te avise cuando esté por llegar?</div>
+      </div>
+
+      <div class="suggest-row">
+        <div class="suggest-chip">Reportar demora</div>
+        <div class="suggest-chip">Ruta más rápida</div>
+        <div class="suggest-chip">Horario de servicio</div>
+      </div>
+
+      <div class="chat-input">
+        <input type="text" placeholder="Escribe tu consulta...">
+        <button class="send-btn">➤</button>
+      </div>
+    </div>
+
+    <!-- ALERTAS -->
+    <div class="view" id="view-alertas">
+      <div class="app-header">
+        <h1 class="page-title" style="margin:0;">Alertas de incidencias</h1>
+        <div class="avatar">DR</div>
+      </div>
+      <p class="page-sub">3 incidencias activas en tu ruta</p>
+
+      <div class="card alert-card">
+        <span class="alert-tag high">Desvío</span>
+        <div>
+          <div class="alert-title">Estación Angamos cerrada temporalmente</div>
+          <div class="alert-desc">Buses desviados por manifestación. Usa Ricardo Palma como alterna.</div>
+          <div class="alert-meta">Hace 8 min · Sentido sur</div>
+        </div>
+      </div>
+
+      <div class="card alert-card">
+        <span class="alert-tag mid">Demora</span>
+        <div>
+          <div class="alert-title">Tráfico en Javier Prado</div>
+          <div class="alert-desc">Buses con 6-8 min de retraso por congestión vehicular.</div>
+          <div class="alert-meta">Hace 14 min · Ambos sentidos</div>
+        </div>
+      </div>
+
+      <div class="card alert-card">
+        <span class="alert-tag low">Aviso</span>
+        <div>
+          <div class="alert-title">Mantenimiento programado</div>
+          <div class="alert-desc">Estación Matellini con servicio reducido de 11pm a 5am.</div>
+          <div class="alert-meta">Hace 1 h · Terminal sur</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tabbar">
+    <div class="tab active" data-view="inicio" onclick="showView('inicio')">
+      <span class="tab-ico">🏠</span>Inicio
+    </div>
+    <div class="tab" data-view="mapa" onclick="showView('mapa')">
+      <span class="tab-ico">📍</span>Mapa
+    </div>
+    <div class="tab" data-view="pasajes" onclick="showView('pasajes')">
+      <span class="tab-ico">🎫</span>Pasajes
+    </div>
+    <div class="tab" data-view="reservas" onclick="showView('reservas')">
+      <span class="tab-ico">📅</span>Reservas
+    </div>
+    <div class="tab" data-view="asistente" onclick="showView('asistente')" style="position:relative;">
+      <span class="tab-ico">✦</span>Asistente
+    </div>
+  </div>
+</div>
+
+<script>
+function showView(name){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const tab = document.querySelector('.tab[data-view="' + name + '"]');
+  if(tab) tab.classList.add('active');
+  document.querySelector('.screen').scrollTo(0,0);
+}
+
+// Ticket selection
+document.querySelectorAll('.ticket-opt').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.querySelectorAll('.ticket-opt').forEach(o=>o.classList.remove('selected'));
+    el.classList.add('selected');
+  });
+});
+
+// Slot selection
+document.querySelectorAll('.slot').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    document.querySelectorAll('.slot').forEach(o=>o.classList.remove('selected'));
+    el.classList.add('selected');
+  });
+});
+</script>
+
+</body>
+</html>
